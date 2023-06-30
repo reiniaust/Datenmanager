@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Meine Webanwendung</title>
+  </head>
+  <body>
+    <h1>Meine Daten</h1>
+    <table>
+      <tr>
+        <th>Id</th>
+        <th>Nachname</th>
+        <th>Vorname</th>
+      </tr>
+      {% for row in data %}
+      <tr>
+        <td>{{row['ID']}}</td>
+        <td>{{row['NACHNAME']}}</td>
+        <td>{{row['VORNAME']}}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>
