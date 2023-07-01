@@ -16,7 +16,7 @@ view = 'kontakte'
 
 @app.route('/' + view)
 def index():
-    c.execute('SELECT * FROM Kontakte')
+    c.execute('SELECT * FROM ' + view)
 
     rows = c.fetchall()
 
