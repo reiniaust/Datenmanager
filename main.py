@@ -9,38 +9,30 @@ conn_str = (
     r'DBQ=C:\Users\reinh\OneDrive\Documents\Schützenverein Stukenbrock\Analyse.accdb;'
 )
 conn = pyodbc.connect(conn_str)
-# Verbindung zur SQLite-Datenbank herstellen
 c = conn.cursor()
 
-
-# Daten aus der Datenbank abfragen
-c.execute('SELECT * FROM Kontakte')
-
-# columns = [column[0] for column in c.description]
-rows = c.fetchall()
-# data1 = rows.to_dict('records')
-
-# column_names = [r[0] for r in rows]
-columns = [column[0] for column in c.description]
-# Print the list of column names
-
-data = []
-for row in rows:
-    obj = {}
-    i = 0
-    for column in columns:
-        obj[column] = row[i]
-        i += 1
-    data.append(obj)
-
-# Daten in JSON konvertieren
-json_data = json.dumps(data)
-
-# Flask-Route definieren
+view = 'kontakte'
 
 
-@app.route('/')
+@app.route('/' + view)
 def index():
+    c.execute('SELECT * FROM Kontakte')
+
+    rows = c.fetchall()
+
+    columns = [column[0] for column in c.description]
+
+    data = []
+    # Daten in JSON konvertieren
+    for row in rows:
+        obj = {}
+        i = 0
+        for column in columns:
+            obj[column] = row[i]
+            i += 1
+        data.append(obj)
+    json_data = json.dumps(data)
+
     # Daten an das HTML-Template übergeben
     # return render_template('index.html', data=data)
     return json_data
