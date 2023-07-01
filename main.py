@@ -13,10 +13,22 @@ c = conn.cursor()
 
 view = 'kontakte'
 
+column_def = {
+    "ID": "ID",
+    "Nachname": "NACHNAME",
+    "Vorname": "VORNAME"
+}
+
 
 @app.route('/' + view)
 def index():
-    c.execute('SELECT * FROM ' + view)
+    column_names = ""
+    comma = " "
+    for key, value in column_def.items():
+        column_names += comma + view + "." + value + " as " + key
+        comma = ", "
+
+    c.execute("SELECT " + column_names + " FROM " + view)
 
     rows = c.fetchall()
 
