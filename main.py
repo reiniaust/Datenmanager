@@ -13,22 +13,37 @@ c = conn.cursor()
 
 view = 'kontakte'
 
-column_def = {
-    "ID": "ID",
-    "Nachname": "NACHNAME",
-    "Vorname": "VORNAME"
+views = {
+    "kontakte": {
+        "table": "Kontakte",
+        "columns": {
+            "ID": "ID",
+            "Nachname": "NACHNAME",
+            "Vorname": "VORNAME"
+        }
+    },
+    "spenden": {
+        "table": "Spenden",
+        "columns": {
+            "ID": "ID",
+            "Spender": "Spender",
+            "Betrag": "Betrag"
+        }
+    }
 }
 
 
-@app.route('/' + view)
-def index():
+@app.route('/data/<view_name>')
+def index(view_name):
+    print(view_name)
+    view = views[view_name]
     column_names = ""
     comma = " "
-    for key, value in column_def.items():
-        column_names += comma + view + "." + value + " as " + key
+    for key, value in view["columns"].items():
+        column_names += comma + view["table"] + "." + value + " as " + key
         comma = ", "
 
-    c.execute("SELECT " + column_names + " FROM " + view)
+    c.execute("SELECT " + column_names + " FROM " + view["table"])
 
     rows = c.fetchall()
 
