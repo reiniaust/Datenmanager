@@ -4,38 +4,21 @@ import json
 
 app = Flask(__name__)
 
-conn_str = (
-    r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};'
-    r'DBQ=C:\Users\reinh\OneDrive\Documents\Schützenverein Stukenbrock\Analyse.accdb;'
-)
+
+with open('config.json') as f:
+    config = json.load(f)
+
+conn_str = config['connection_string']
 conn = pyodbc.connect(conn_str)
 c = conn.cursor()
 
-view = 'kontakte'
-
-views = {
-    "kontakte": {
-        "table": "Kontakte",
-        "columns": {
-            "ID": "ID",
-            "Nachname": "NACHNAME",
-            "Vorname": "VORNAME"
-        }
-    },
-    "spenden": {
-        "table": "Spenden",
-        "columns": {
-            "ID": "ID",
-            "Spender": "Spender",
-            "Betrag": "Betrag"
-        }
-    }
-}
+views = config['views']
 
 
 @app.route('/data/<view_name>')
 def index(view_name):
-    print(view_name)
+    # Den ersten Buchstaben als Großbuchstaben formatieren
+    view_name = view_name.capitalize()
     view = views[view_name]
     column_names = ""
     comma = " "

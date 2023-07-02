@@ -1,0 +1,21 @@
+{
+    "connection_string": "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=C:\\Users\\reinh\\OneDrive\\Documents\\Analyse.accdb;",
+    "views": {
+        "Kontakte": {
+            "table": "Kontakte",
+            "columns": {
+                "ID": "ID",
+                "Nachname": "NACHNAME",
+                "Vorname": "VORNAME"
+            }
+        },
+        "Spenden": {
+            "table": "Spenden",
+            "columns": {
+                "ID": "ID",
+                "Spender": "Spender",
+                "Betrag": "Betrag"
+            }
+        }
+    }
+}
