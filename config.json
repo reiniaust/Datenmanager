@@ -17,5 +17,8 @@
                 "Betrag": "Betrag"
             }
         }
+    },
+    "relations": {
+        "Spenden": {"Spender": "Kontakte"}
     }
 }

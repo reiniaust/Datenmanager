@@ -4,21 +4,22 @@ import json
 
 app = Flask(__name__)
 
-
-with open('config.json') as f:
+with open("config.json") as f:
     config = json.load(f)
 
-conn_str = config['connection_string']
+conn_str = config["connection_string"]
 conn = pyodbc.connect(conn_str)
 c = conn.cursor()
 
-views = config['views']
+views = config["views"]
+relations = config["relations"]
 
 
-@app.route('/data/<view_name>')
+@app.route("/data/<view_name>")
 def index(view_name):
     # Den ersten Buchstaben als Großbuchstaben formatieren
     view_name = view_name.capitalize()
+
     view = views[view_name]
     column_names = ""
     comma = " "
@@ -26,7 +27,20 @@ def index(view_name):
         column_names += comma + view["table"] + "." + value + " as " + key
         comma = ", "
 
-    c.execute("SELECT " + column_names + " FROM " + view["table"])
+    try:
+        relation = relations[view_name]
+        for (key, value) in relation.items():
+            joinTbl = views[value]["table"]
+            foreignId = views[value]["columns"]["ID"]
+            join = " left join " + joinTbl + " on " + \
+                view["table"] + "." + key + \
+                " = " + joinTbl + "." + foreignId
+    except:
+        join = ""
+
+    print(join)
+
+    c.execute("select " + column_names + " from " + view["table"] + join)
 
     rows = c.fetchall()
 
@@ -44,9 +58,9 @@ def index(view_name):
     json_data = json.dumps(data)
 
     # Daten an das HTML-Template übergeben
-    # return render_template('index.html', data=data)
+    # return render_template("index.html", data=data)
     return json_data
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
