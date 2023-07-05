@@ -38,8 +38,6 @@ def index(view_name):
     except:
         join = ""
 
-    print(join)
-
     c.execute("select " + column_names + " from " + view["table"] + join)
 
     rows = c.fetchall()
@@ -58,8 +56,8 @@ def index(view_name):
     json_data = json.dumps(data)
 
     # Daten an das HTML-Template übergeben
-    # return render_template("index.html", data=data)
-    return json_data
+    return render_template("index.html", data=data)
+    # return json_data
 
 
 if __name__ == "__main__":
