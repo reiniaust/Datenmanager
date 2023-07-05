@@ -1,23 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>Meine Webanwendung</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DevExtreme Demo</title>
+    <!-- Verwenden Sie die neuesten Versionen von jQuery und DevExtreme -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn3.devexpress.com/jslib/21.2.6/css/dx.common.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn3.devexpress.com/jslib/21.2.6/css/dx.light.css"
+    />
+    <script src="https://cdn3.devexpress.com/jslib/21.2.6/js/dx.all.js"></script>
+    <script>
+      // Definieren Sie die Beispieldaten
+      const customers = [
+        {
+          ID: 1,
+          CompanyName: "Super Mart of the West",
+          Address: "702 SW 8th Street",
+          City: "Bentonville",
+          State: "Arkansas",
+          Zipcode: 72716,
+          Phone: "(800) 555-2797",
+          Fax: "(800) 555-2171",
+          Website: "http://www.nowebsitesupermart.com",
+        },
+        {
+          ID: 2,
+          CompanyName: "Electronics Depot",
+          Address: "2455 Paces Ferry Road NW",
+          City: "Atlanta",
+          State: "Georgia",
+          Zipcode: 30339,
+          Phone: "(800) 595-3232",
+          Fax: "(800) 595-3231",
+          Website: "http://www.nowebsitedepot.com",
+        },
+      ];
+    </script>
   </head>
-  <body>
-    <h1>Meine Daten</h1>
-    <table>
-      <tr>
-        <th>Id</th>
-        <th>Nachname</th>
-        <th>Vorname</th>
-      </tr>
-      {% for row in data %}
-      <tr>
-        <td>{{row['ID']}}</td>
-        <td>{{row['NACHNAME']}}</td>
-        <td>{{row['VORNAME']}}</td>
-      </tr>
-      {% endfor %}
-    </table>
+  <body data-data="{{ data|tojson }}">
+    <header>
+      <h1>DevExtreme Demo</h1>
+    </header>
+    <main>
+      <div class="demo-container">
+        <div id="gridContainer"></div>
+      </div>
+    </main>
+    <footer>
+      <p>&copy; 2023 My Company</p>
+    </footer>
+    <!-- Schließen Sie das data-data-Attribut im body-Tag ordnungsgemäß ab -->
+    <script>
+      let dataString = document.querySelector("body").getAttribute("data-data");
+      //let data = JSON.parse(dataString);
+      //alert(data);
+      $(() => {
+        // Initalisiere das dxDataGrid-Widget mit den Beispieldaten
+        $("#gridContainer").dxDataGrid({
+          dataSource: dataString,
+        });
+      });
+    </script>
   </body>
 </html>
