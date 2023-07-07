@@ -14,11 +14,9 @@ c = conn.cursor()
 views = config["views"]
 relations = config["relations"]
 
-
-@app.route("/data/<view_name>")
-def index(view_name):
+for key, value in views.items():
     # Den ersten Buchstaben als Großbuchstaben formatieren
-    view_name = view_name.capitalize()
+    view_name = key
 
     view = views[view_name]
     column_names = ""
@@ -53,6 +51,17 @@ def index(view_name):
             obj[column] = row[i]
             i += 1
         data.append(obj)
+
+    view["data"] = data
+
+
+@app.route("/data/<view_name>")
+def index(view_name):
+    # Den ersten Buchstaben als Großbuchstaben formatieren
+    view_name = view_name.capitalize()
+
+    view = views[view_name]
+    data = view["data"]
     json_data = json.dumps(data)
 
     # Daten an das HTML-Template übergeben
