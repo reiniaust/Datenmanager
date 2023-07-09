@@ -16,9 +16,19 @@
       <tbody>
         {% for row in data %}
         <tr>
-          {% for key, value in row.items() %}
+          {% for key, value in row.items() %} {% if key == "ID"%}
+          <td>{{ value }}</td>
+          {% else %} {% if relations[key] %}
+          <td>
+            <select value={{ value }}>
+              {% for row in relations[key] %}
+              <option value={{ row["ID"] }} {% if row["ID"] == value %} selected {% endif %}>{{ row["Name"] }}</option>
+              {% endfor %}
+            </select>
+          </td> 
+          {% else %}
           <td><input type="text" value="{{ value }}" /></td>
-          {% endfor %}
+          {% endif %} {% endif %} {% endfor %}
         </tr>
         {% endfor %}
       </tbody>

@@ -5,6 +5,7 @@
             "table": "Kontakte",
             "columns": {
                 "ID": "ID",
+                "Name": "NACHNAME & ', ' & VORNAME",
                 "Nachname": "NACHNAME",
                 "Vorname": "VORNAME"
             }
@@ -19,6 +20,8 @@
         }
     },
     "relations": {
-        "Spenden": {"Spender": "Kontakte"}
+        "Spenden": {
+            "Spender": "Kontakte"
+        }
     }
 }

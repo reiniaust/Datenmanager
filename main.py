@@ -15,7 +15,6 @@ views = config["views"]
 relations = config["relations"]
 
 for key, value in views.items():
-    # Den ersten Buchstaben als Großbuchstaben formatieren
     view_name = key
 
     view = views[view_name]
@@ -36,7 +35,13 @@ for key, value in views.items():
     except:
         join = ""
 
-    c.execute("select " + column_names + " from " + view["table"] + join)
+    try:
+        orderBy = " order by " + view["columns"]["Name"]
+    except:
+        orderBy = ""
+
+    c.execute("select " + column_names + " from " +
+              view["table"] + join + orderBy)
 
     rows = c.fetchall()
 
@@ -54,6 +59,13 @@ for key, value in views.items():
 
     view["data"] = data
 
+    try:
+        view["relations"] = {}
+        for (key, value) in relations[view_name].items():
+            view["relations"][key] = views[value]["data"]
+    except:
+        view["relations"] = {}
+
 
 @app.route("/data/<view_name>")
 def index(view_name):
@@ -61,11 +73,9 @@ def index(view_name):
     view_name = view_name.capitalize()
 
     view = views[view_name]
-    data = view["data"]
-    json_data = json.dumps(data)
 
     # Daten an das HTML-Template übergeben
-    return render_template("index.html", data=data)
+    return render_template("index.html", data=view["data"], relations=view["relations"])
     # return json_data
 
 
