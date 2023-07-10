@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import pyodbc
 import json
 
@@ -73,10 +73,15 @@ def index(view_name):
     view_name = view_name.capitalize()
 
     view = views[view_name]
-
-    # Daten an das HTML-Template übergeben
-    return render_template("index.html", data=view["data"], relations=view["relations"])
+    return render_template("index.html", view_name=view_name, data=view["data"], relations=view["relations"], views=views)
     # return json_data
+
+
+@app.route('/form', methods=['POST'])
+def form():
+    view_name = request.form['view_name']
+    view = views[view_name]
+    return render_template("index.html", view_name=view_name, data=view["data"], relations=view["relations"], views=views)
 
 
 if __name__ == "__main__":
