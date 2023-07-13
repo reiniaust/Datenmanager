@@ -7,7 +7,7 @@
   <body>
     <form action="/form" method="post">
       <label>Suche:</label>
-      <input name="search">
+      <input name="search" value="{{ search }}" >
       <select name="view_name">
         {% for key, value in views.items() %}
         <option value={{ key }} {% if view_name == key %} selected {% endif %}>{{ key }}</option>
@@ -15,16 +15,17 @@
       </select>
       <input type="submit" value="Auswählen">
     </form>
-<table>
+    {% if view_name %}
+    <table>
       <thead>
         <tr>
-          {% for column in data[0] %}
+          {% for column in views[view_name]["data_found"][0] %}
           <th>{{ column }}</th>
           {% endfor %}
         </tr>
       </thead>
       <tbody>
-        {% for row in data %}
+        {% for row in views[view_name]["data_found"] %}
         <tr>
           {% for key, value in row.items() %} {% if key == "ID"%}
           <td>{{ value }}</td>
@@ -43,5 +44,6 @@
         {% endfor %}
       </tbody>
     </table>
+    {% endif %}
   </body>
 </html>

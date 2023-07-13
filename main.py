@@ -14,10 +14,8 @@ c = conn.cursor()
 views = config["views"]
 relations = config["relations"]
 
-for key, value in views.items():
-    view_name = key
+for view_name, view in views.items():
 
-    view = views[view_name]
     column_names = ""
     comma = " "
     for key, value in view["columns"].items():
@@ -67,51 +65,52 @@ for key, value in views.items():
         view["relations"] = {}
 
 
-@app.route("/data/<view_name>")
-def index(view_name):
-    # Den ersten Buchstaben als Großbuchstaben formatieren
-    view_name = view_name.capitalize()
-
-    view = views[view_name]
-    return render_template("index.html", view_name=view_name, data=view["data"], relations=view["relations"], views=views)
-    # return json_data
+@app.route("/start")
+def index():
+    return render_template("index.html", views=views)
 
 
 @app.route('/form', methods=['POST'])
 def form():
-    view_name = request.form['view_name']
+    current_view_name = request.form['view_name']
     search = request.form['search']
-    view = views[view_name]
 
     # Suchtext in Wörter aufteilen
     search_words = search.lower().split()
 
-    data = []
-    for item in view["data"]:
-        found = False
-        for key, value in item.items():
-            if all(word in str(value).lower() for word in search_words):
-                # Wenn alle Wörter im Wert gefunden werden, füge das Element zur Ergebnisliste hinzu
-                data.append(item)
-                found = True
-                break
-            else:
-                try:
-                    # Suche in Beziehung
-                    foreign_view = relations[view_name][key]
-                    foreign_data = views[foreign_view]["data"]
-                    if any(d["ID"] == value and all(word in d["Name"].lower() for word in search_words) for d in foreign_data):
-                        # Wenn alle Wörter im Namen in der Beziehungstabelle gefunden werden, füge das Element zur Ergebnisliste hinzu
-                        data.append(item)
-                        found = True
-                        break
-                except KeyError:
-                    pass
-        if not found:
-            # Wenn das Element oder seine Beziehungstabellen nicht alle Wörter enthalten, überspringen Sie das Element
-            continue
+    views_found = {}
+    for view_name, view in views.items():
+        found_in_view = False
+        view["data_found"] = []
+        for item in view["data"]:
+            found = False
+            for key, value in item.items():
+                if all(word in str(value).lower() for word in search_words):
+                    # Wenn alle Wörter im Wert gefunden werden, füge das Element zur Ergebnisliste hinzu
+                    view["data_found"].append(item)
+                    found = True
+                    found_in_view = True
+                    break
+                else:
+                    try:
+                        # Suche in Beziehung
+                        foreign_view = relations[view_name][key]
+                        foreign_data = views[foreign_view]["data"]
+                        if any(d["ID"] == value and all(word in d["Name"].lower() for word in search_words) for d in foreign_data):
+                            # Wenn alle Wörter im Namen in der Beziehungstabelle gefunden werden, füge das Element zur Ergebnisliste hinzu
+                            view["data_found"].append(item)
+                            found = True
+                            found_in_view = True
+                            break
+                    except KeyError:
+                        pass
+            if not found:
+                # Wenn das Element oder seine Beziehungstabellen nicht alle Wörter enthalten, überspringen Sie das Element
+                continue
+        if found_in_view:
+            views_found[view_name] = view
 
-    return render_template("index.html", view_name=view_name, data=data, relations=view["relations"], views=views)
+    return render_template("index.html", view_name=current_view_name, relations=view["relations"], views=views_found, search=search)
 
 
 if __name__ == "__main__":
