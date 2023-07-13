@@ -3,14 +3,94 @@
   <head>
     <meta charset="UTF-8" />
     <title>Daten</title>
+    <style>
+      /* CSS-Regeln für das Styling der Oberfläche */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+      }
+      form {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      label {
+        margin-right: 10px;
+      }
+      input[name="search"] {
+        padding: 6px 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #f2f2f2;
+        margin-right: 10px;
+        width: 100%;
+      }
+      select[name="view_name"] {
+        padding: 6px 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #f2f2f2;
+        margin-right: 10px;
+        width: 100%;
+      }
+      input[type="submit"] {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin-right: 10px;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      input[type="submit"]:hover {
+        background-color: #3e8e41;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        background-color: white;
+      }
+      th, td {
+        text-align: left;
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+      }
+      th {
+        background-color: #4CAF50;
+        color: white;
+      }
+      tr:hover {
+        background-color: #f5f5f5;
+      }
+      select {
+        padding: 6px 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #f2f2f2;
+        width: 100%;
+      }
+      input[type="text"] {
+        padding: 6px 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #f2f2f2;
+        width: 100%;
+      }
+    </style>
   </head>
   <body>
-    <form action="/form" method="post">
+    <form id="myForm" action="/form" method="post">
       <label>Suche:</label>
       <input name="search" value="{{ search }}" >
-      <select name="view_name">
+      <label>Ansicht:</label>
+      <select name="view_name" onchange="submitForm()">
         {% for key, value in views.items() %}
-        <option value={{ key }} {% if view_name == key %} selected {% endif %}>{{ key }}</option>
+        <option value="{{ key }}" {% if view_name == key %} selected {% endif %}>{{ key }}</option>
         {% endfor %}
       </select>
       <input type="submit" value="Auswählen">
@@ -27,23 +107,33 @@
       <tbody>
         {% for row in views[view_name]["data_found"] %}
         <tr>
-          {% for key, value in row.items() %} {% if key == "ID"%}
+          {% for key, value in row.items() %}
+          {% if key == "ID" %}
           <td>{{ value }}</td>
-          {% else %} {% if relations[key] %}
+          {% else %}
+          {% if relations[key] %}
           <td>
-            <select value={{ value }}>
-              {% for row in relations[key] %}
-              <option value={{ row["ID"] }} {% if row["ID"] == value %} selected {% endif %}>{{ row["Name"] }}</option>
+            <select value="{{ value }}">
+              {% for rel_row in relations[key] %}
+              <option value="{{ rel_row['ID'] }}" {% if rel_row['ID'] == value %} selected {% endif %}>{{ rel_row['Name'] }}</option>
               {% endfor %}
             </select>
-          </td> 
+          </td>
           {% else %}
           <td><input type="text" value="{{ value }}" /></td>
-          {% endif %} {% endif %} {% endfor %}
+          {% endif %}
+          {% endif %}
+          {% endfor %}
         </tr>
         {% endfor %}
       </tbody>
     </table>
     {% endif %}
+
+    <script>
+      function submitForm() {
+        document.getElementById("myForm").submit();
+      }
+    </script>
   </body>
 </html>
