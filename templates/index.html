@@ -5,7 +5,17 @@
     <title>Daten</title>
   </head>
   <body>
-    <table>
+    <form action="/form" method="post">
+      <label>Suche:</label>
+      <input name="search">
+      <select name="view_name">
+        {% for key, value in views.items() %}
+        <option value={{ key }} {% if view_name == key %} selected {% endif %}>{{ key }}</option>
+        {% endfor %}
+      </select>
+      <input type="submit" value="Auswählen">
+    </form>
+<table>
       <thead>
         <tr>
           {% for column in data[0] %}

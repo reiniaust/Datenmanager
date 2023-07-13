@@ -80,8 +80,38 @@ def index(view_name):
 @app.route('/form', methods=['POST'])
 def form():
     view_name = request.form['view_name']
+    search = request.form['search']
     view = views[view_name]
-    return render_template("index.html", view_name=view_name, data=view["data"], relations=view["relations"], views=views)
+
+    # Suchtext in Wörter aufteilen
+    search_words = search.lower().split()
+
+    data = []
+    for item in view["data"]:
+        found = False
+        for key, value in item.items():
+            if all(word in str(value).lower() for word in search_words):
+                # Wenn alle Wörter im Wert gefunden werden, füge das Element zur Ergebnisliste hinzu
+                data.append(item)
+                found = True
+                break
+            else:
+                try:
+                    # Suche in Beziehung
+                    foreign_view = relations[view_name][key]
+                    foreign_data = views[foreign_view]["data"]
+                    if any(d["ID"] == value and all(word in d["Name"].lower() for word in search_words) for d in foreign_data):
+                        # Wenn alle Wörter im Namen in der Beziehungstabelle gefunden werden, füge das Element zur Ergebnisliste hinzu
+                        data.append(item)
+                        found = True
+                        break
+                except KeyError:
+                    pass
+        if not found:
+            # Wenn das Element oder seine Beziehungstabellen nicht alle Wörter enthalten, überspringen Sie das Element
+            continue
+
+    return render_template("index.html", view_name=view_name, data=data, relations=view["relations"], views=views)
 
 
 if __name__ == "__main__":
