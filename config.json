@@ -15,7 +15,8 @@
             "columns": {
                 "ID": "ID",
                 "Spender": "Spender",
-                "Betrag": "Betrag"
+                "Betrag": "Betrag",
+                "Datum": "Tag"
             }
         }
     },

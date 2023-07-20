@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 import pyodbc
 import json
+import re
 
 app = Flask(__name__)
 
@@ -22,24 +23,14 @@ for view_name, view in views.items():
         column_names += comma + view["table"] + "." + value + " as " + key
         comma = ", "
 
+    orderBy = " order by "
     try:
-        relation = relations[view_name]
-        for (key, value) in relation.items():
-            joinTbl = views[value]["table"]
-            foreignId = views[value]["columns"]["ID"]
-            join = " left join " + joinTbl + " on " + \
-                view["table"] + "." + key + \
-                " = " + joinTbl + "." + foreignId
+        orderBy += view["columns"]["Name"]
     except:
-        join = ""
-
-    try:
-        orderBy = " order by " + view["columns"]["Name"]
-    except:
-        orderBy = ""
+        orderBy += view["columns"]["ID"] + " desc"
 
     c.execute("select " + column_names + " from " +
-              view["table"] + join + orderBy)
+              view["table"] + orderBy)
 
     rows = c.fetchall()
 
@@ -67,7 +58,10 @@ for view_name, view in views.items():
 
 @app.route("/start")
 def index():
-    return render_template("index.html", views=views)
+    for view_name, view in views.items():
+        view["data_found"] = view["data"]
+        return render_template("index.html", view_name=view_name, relations=view["relations"], views=views)
+        break
 
 
 @app.route('/form', methods=['POST'])
@@ -85,7 +79,7 @@ def form():
         for item in view["data"]:
             found = False
             for key, value in item.items():
-                if all(word in str(value).lower() for word in search_words):
+                if all(re.compile(r"\b" + word).search(str(value).lower()) for word in search_words):
                     # Wenn alle Wörter im Wert gefunden werden, füge das Element zur Ergebnisliste hinzu
                     view["data_found"].append(item)
                     found = True
@@ -96,7 +90,7 @@ def form():
                         # Suche in Beziehung
                         foreign_view = relations[view_name][key]
                         foreign_data = views[foreign_view]["data"]
-                        if any(d["ID"] == value and all(word in d["Name"].lower() for word in search_words) for d in foreign_data):
+                        if any(d["ID"] == value and all(re.compile(r"\b" + word).search(str(d["Name"]).lower()) for word in search_words) for d in foreign_data):
                             # Wenn alle Wörter im Namen in der Beziehungstabelle gefunden werden, füge das Element zur Ergebnisliste hinzu
                             view["data_found"].append(item)
                             found = True
@@ -109,6 +103,10 @@ def form():
                 continue
         if found_in_view:
             views_found[view_name] = view
+
+    if views_found == []:
+        views_found = views
+        search = ""
 
     return render_template("index.html", view_name=current_view_name, relations=view["relations"], views=views_found, search=search)
 
