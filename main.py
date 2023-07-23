@@ -67,46 +67,63 @@ def index():
 @app.route('/form', methods=['POST'])
 def form():
     current_view_name = request.form['view_name']
+    found_in_current_view = False
     search = request.form['search']
 
     # Suchtext in Wörter aufteilen
     search_words = search.lower().split()
 
     views_found = {}
+    found_key = ""
     for view_name, view in views.items():
         found_in_view = False
         view["data_found"] = []
+
+        for key, value in view["data"][0].items():
+            if re.compile(r"\b" + search_words[0]).search(str(key).lower()):
+                found_key = key
+                search_words = search_words[1:]
+
         for item in view["data"]:
             found = False
             for key, value in item.items():
-                if all(re.compile(r"\b" + word).search(str(value).lower()) for word in search_words):
-                    # Wenn alle Wörter im Wert gefunden werden, füge das Element zur Ergebnisliste hinzu
-                    view["data_found"].append(item)
-                    found = True
-                    found_in_view = True
-                    break
-                else:
-                    try:
-                        # Suche in Beziehung
-                        foreign_view = relations[view_name][key]
-                        foreign_data = views[foreign_view]["data"]
-                        if any(d["ID"] == value and all(re.compile(r"\b" + word).search(str(d["Name"]).lower()) for word in search_words) for d in foreign_data):
-                            # Wenn alle Wörter im Namen in der Beziehungstabelle gefunden werden, füge das Element zur Ergebnisliste hinzu
-                            view["data_found"].append(item)
-                            found = True
-                            found_in_view = True
-                            break
-                    except KeyError:
-                        pass
+                if found_key == "" or found_key == key:
+                    if all(re.compile(r"\b" + word).search(str(value).lower()) for word in search_words):
+                        # Wenn alle Wörter im Wert gefunden werden, füge das Element zur Ergebnisliste hinzu
+                        view["data_found"].append(item)
+                        found = True
+                        found_in_view = True
+                        break
+                    else:
+                        try:
+                            # Suche in Beziehung
+                            foreign_view = relations[view_name][key]
+                            foreign_data = views[foreign_view]["data"]
+                            if any(d["ID"] == value and all(re.compile(r"\b" + word).search(str(d["Name"]).lower()) for word in search_words) for d in foreign_data):
+                                # Wenn alle Wörter im Namen in der Beziehungstabelle gefunden werden, füge das Element zur Ergebnisliste hinzu
+                                view["data_found"].append(item)
+                                found = True
+                                found_in_view = True
+                                break
+                        except KeyError:
+                            pass
+
             if not found:
                 # Wenn das Element oder seine Beziehungstabellen nicht alle Wörter enthalten, überspringen Sie das Element
                 continue
         if found_in_view:
             views_found[view_name] = view
+            if view_name == current_view_name:
+                found_in_current_view = True
 
     if views_found == []:
         views_found = views
         search = ""
+    else:
+        if found_in_current_view == False:
+            for view_name, view in views_found.items():
+                current_view_name = view_name
+                break
 
     return render_template("index.html", view_name=current_view_name, relations=view["relations"], views=views_found, search=search)
 
