@@ -87,13 +87,13 @@
     <form id="myForm" action="/form" method="post">
       <label>Suche:</label>
       <input name="search" value="{{ search }}" >
+      <input type="submit" value="OK">
       <label>Ansicht:</label>
       <select name="view_name" onchange="submitForm()">
         {% for key, value in views.items() %}
         <option value="{{ key }}" {% if view_name == key %} selected {% endif %}>{{ key }}</option>
         {% endfor %}
       </select>
-      <input type="submit" value="Auswählen">
     </form>
     {% if view_name %}
     <table>

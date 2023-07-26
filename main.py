@@ -15,49 +15,68 @@ c = conn.cursor()
 views = config["views"]
 relations = config["relations"]
 
-for view_name, view in views.items():
 
-    column_names = ""
-    comma = " "
-    for key, value in view["columns"].items():
-        column_names += comma + view["table"] + "." + value + " as " + key
-        comma = ", "
+def load_data_from_db():
+    with open("config.json") as f:
+        config = json.load(f)
 
-    orderBy = " order by "
-    try:
-        orderBy += view["columns"]["Name"]
-    except:
-        orderBy += view["columns"]["ID"] + " desc"
+    conn_str = config["connection_string"]
+    conn = pyodbc.connect(conn_str)
+    c = conn.cursor()
 
-    c.execute("select " + column_names + " from " +
-              view["table"] + orderBy)
+    views = config["views"]
+    relations = config["relations"]
 
-    rows = c.fetchall()
+    for view_name, view in views.items():
 
-    columns = [column[0] for column in c.description]
+        column_names = ""
+        comma = " "
+        for key, value in view["columns"].items():
+            column_names += comma + view["table"] + "." + value + " as " + key
+            comma = ", "
 
-    data = []
-    # Daten in JSON konvertieren
-    for row in rows:
-        obj = {}
-        i = 0
-        for column in columns:
-            obj[column] = row[i]
-            i += 1
-        data.append(obj)
+        orderBy = " order by "
+        try:
+            orderBy += view["columns"]["Name"]
+        except:
+            orderBy += view["columns"]["ID"] + " desc"
 
-    view["data"] = data
+        c.execute("select " + column_names + " from " +
+                  view["table"] + orderBy)
 
-    try:
-        view["relations"] = {}
-        for (key, value) in relations[view_name].items():
-            view["relations"][key] = views[value]["data"]
-    except:
-        view["relations"] = {}
+        rows = c.fetchall()
+
+        columns = [column[0] for column in c.description]
+
+        data = []
+        # Daten in JSON konvertieren
+        for row in rows:
+            obj = {}
+            i = 0
+            for column in columns:
+                obj[column] = row[i]
+                i += 1
+            data.append(obj)
+
+        view["data"] = data
+
+        try:
+            view["relations"] = {}
+            for (key, value) in relations[view_name].items():
+                view["relations"][key] = views[value]["data"]
+        except:
+            view["relations"] = {}
+
+    return views
+
+
+views = {}
 
 
 @app.route("/start")
 def index():
+    views = load_data_from_db()
+
     for view_name, view in views.items():
         view["data_found"] = view["data"]
         return render_template("index.html", view_name=view_name, relations=view["relations"], views=views)
@@ -66,6 +85,8 @@ def index():
 
 @app.route('/form', methods=['POST'])
 def form():
+    views = load_data_from_db()
+
     current_view_name = request.form['view_name']
     found_in_current_view = False
     search = request.form['search']
