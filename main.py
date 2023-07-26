@@ -74,20 +74,26 @@ def form():
     search_words = search.lower().split()
 
     views_found = {}
+    found_view_name = ""
     found_key = ""
+    all_search_words = search_words
     for view_name, view in views.items():
         found_in_view = False
         view["data_found"] = []
 
-        for key, value in view["data"][0].items():
-            if re.compile(r"\b" + search_words[0]).search(str(key).lower()):
-                found_key = key
-                search_words = search_words[1:]
+        if len(search_words) != 0:
+            if re.compile(r"\b" + all_search_words[0]).search(str(view_name).lower()):
+                found_view_name = view_name
+                search_words = all_search_words[1:]
+            for key, value in view["data"][0].items():
+                if re.compile(r"\b" + all_search_words[0]).search(str(key).lower()):
+                    found_key = key
+                    search_words = all_search_words[1:]
 
         for item in view["data"]:
             found = False
             for key, value in item.items():
-                if found_key == "" or found_key == key:
+                if found_view_name == "" and found_key == "" or found_view_name == view_name or found_key == key:
                     if all(re.compile(r"\b" + word).search(str(value).lower()) for word in search_words):
                         # Wenn alle Wörter im Wert gefunden werden, füge das Element zur Ergebnisliste hinzu
                         view["data_found"].append(item)
@@ -116,7 +122,7 @@ def form():
             if view_name == current_view_name:
                 found_in_current_view = True
 
-    if views_found == []:
+    if len(views_found) == 0:
         views_found = views
         search = ""
     else:
