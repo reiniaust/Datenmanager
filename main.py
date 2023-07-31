@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import pyodbc
 import json
 import re
@@ -12,7 +12,6 @@ conn_str = config["connection_string"]
 conn = pyodbc.connect(conn_str)
 c = conn.cursor()
 
-views = config["views"]
 relations = config["relations"]
 
 
@@ -25,7 +24,6 @@ def load_data_from_db():
     c = conn.cursor()
 
     views = config["views"]
-    relations = config["relations"]
 
     for view_name, view in views.items():
 
@@ -70,22 +68,55 @@ def load_data_from_db():
     return views
 
 
-views = {}
+def save_data_to_db(view_name, data):
+    with open("config.json") as f:
+        config = json.load(f)
+
+    conn_str = config["connection_string"]
+    conn = pyodbc.connect(conn_str)
+    c = conn.cursor()
+
+    table_name = config["views"][view_name]["table"]
+    id_field = config["views"][view_name]["columns"]["ID"]
+
+    for row in data:
+        # Überprüfen, ob die Daten geändert wurden
+        if row.get("changed", False):
+            set_clause = ""
+            comma = " "
+            for key, value in row.items():
+                if key != "ID" and key != "changed":
+                    old_value = config["views"][view_name]["data"][row["ID"]-1][key]
+                    if old_value != value:
+                        set_clause += comma + \
+                            config["views"][view_name]["columns"][key] + \
+                            " = '" + str(value) + "'"
+                        comma = ", "
+
+            update_query = "update " + table_name + " set " + \
+                set_clause + " where " + id_field + " = " + str(row["ID"])
+            print(update_query)
+            c.execute(update_query)
+
+    conn.commit()
+
+
+views_and_data = load_data_from_db()
 
 
 @app.route("/start")
 def index():
-    views = load_data_from_db()
+    # views = load_data_from_db()
 
-    for view_name, view in views.items():
+    for view_name, view in views_and_data.items():
         view["data_found"] = view["data"]
-        return render_template("index.html", view_name=view_name, relations=view["relations"], views=views)
+        return render_template("index.html", view_name=view_name, relations=view["relations"], views=views_and_data)
         break
 
 
 @app.route('/form', methods=['POST'])
 def form():
-    views = load_data_from_db()
+    # views = load_data_from_db()
 
     current_view_name = request.form['view_name']
     found_in_current_view = False
@@ -98,7 +129,7 @@ def form():
     found_view_name = ""
     found_key = ""
     all_search_words = search_words
-    for view_name, view in views.items():
+    for view_name, view in views_and_data.items():
         found_in_view = False
         view["data_found"] = []
 
@@ -113,27 +144,27 @@ def form():
 
         for item in view["data"]:
             found = False
+            search_in = ""
             for key, value in item.items():
                 if found_view_name == "" and found_key == "" or found_view_name == view_name or found_key == key:
-                    if all(re.compile(r"\b" + word).search(str(value).lower()) for word in search_words):
-                        # Wenn alle Wörter im Wert gefunden werden, füge das Element zur Ergebnisliste hinzu
-                        view["data_found"].append(item)
-                        found = True
-                        found_in_view = True
-                        break
-                    else:
-                        try:
-                            # Suche in Beziehung
-                            foreign_view = relations[view_name][key]
-                            foreign_data = views[foreign_view]["data"]
-                            if any(d["ID"] == value and all(re.compile(r"\b" + word).search(str(d["Name"]).lower()) for word in search_words) for d in foreign_data):
-                                # Wenn alle Wörter im Namen in der Beziehungstabelle gefunden werden, füge das Element zur Ergebnisliste hinzu
-                                view["data_found"].append(item)
-                                found = True
-                                found_in_view = True
+                    search_in += " " + str(value)
+                    try:
+                        # Suche in Beziehung
+                        foreign_view = relations[view_name][key]
+                        foreign_data = views_and_data[foreign_view]["data"]
+                        for d in foreign_data:
+                            if d["ID"] == value:
+                                search_in += " " + str(d["Name"])
                                 break
-                        except KeyError:
-                            pass
+                    except KeyError:
+                        pass
+
+                if all(re.compile(r"\b" + word).search(str(search_in).lower()) for word in search_words):
+                    # Wenn alle Wörter im Wert gefunden werden, füge das Element zur Ergebnisliste hinzu
+                    view["data_found"].append(item)
+                    found = True
+                    found_in_view = True
+                    break
 
             if not found:
                 # Wenn das Element oder seine Beziehungstabellen nicht alle Wörter enthalten, überspringen Sie das Element
@@ -144,7 +175,7 @@ def form():
                 found_in_current_view = True
 
     if len(views_found) == 0:
-        views_found = views
+        views_found = views_and_data
         search = ""
     else:
         if found_in_current_view == False:
@@ -153,6 +184,37 @@ def form():
                 break
 
     return render_template("index.html", view_name=current_view_name, relations=view["relations"], views=views_found, search=search)
+
+
+@app.route('/save_data', methods=['POST'])
+def save_data():
+    if request.method == 'POST':
+        try:
+            view_name = request.json['view_name']
+            data = request.json['data']
+            old_data = views_and_data[view_name]["data"]
+
+            # Überprüfen, ob die Daten geändert wurden, und das Feld "changed" entsprechend markieren
+            for row in data:
+                if row != None and row.get("ID", None) != None:
+                    # row["changed"] = False
+                    for key, value in row.items():
+                        if key != "ID" and value != None and value != "":
+                            for row_old in old_data:
+                                if str(row_old["ID"]) == str(row["ID"]):
+                                    old_value = row_old[key]
+                                    print(old_value)
+                                    print(value)
+                                    print(str(old_value) != str(value))
+                                    if str(old_value) != str(value):
+                                        print(value)
+                                        row["changed"] = True
+                                    break
+
+            save_data_to_db(view_name, data)
+            return jsonify({'success': True})
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)})
 
 
 if __name__ == "__main__":
