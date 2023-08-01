@@ -116,7 +116,7 @@ def index():
 
 @app.route('/form', methods=['POST'])
 def form():
-    # views = load_data_from_db()
+    views_and_data = load_data_from_db()
 
     current_view_name = request.form['view_name']
     found_in_current_view = False
