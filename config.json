@@ -5,8 +5,7 @@
             "table": "Mitglieder",
             "columns": {
                 "ID": "Mitgliedsnummer",
-                "Nachname": "Nachname",
-                "Vorname": "Vorname",
+                "Name": "Nachname & ', ' & Vorname",
                 "Geburtsdatum": "Geburtsdatum",
                 "Strasse": "Strasse"
             }
@@ -17,7 +16,8 @@
                 "ID": "ID",
                 "Name": "NACHNAME & ', ' & VORNAME",
                 "Nachname": "NACHNAME",
-                "Vorname": "VORNAME"
+                "Vorname": "VORNAME",
+                "Mitglied": "Mitgliedsnummer"
             }
         },
         "Spenden": {
@@ -32,7 +32,8 @@
     },
     "relations": {
         "Spenden": {
-            "Spender": "Kontakte"
+            "Spender": "Kontakte",
+            "Mitglied": "Mitglieder"
         }
     }
 }
