@@ -220,16 +220,16 @@ def form():
                 current_view_name = view_name
                 break
 
-    last_view_name = current_view_name
+        last_view_name = current_view_name
     last_found_views_and_data = found_views_and_data
-    last_view = view
+    last_view = views[current_view_name]
 
     columnsWidth = {}
     for key, value in views[current_view_name]["columns"].items():
         columnsWidth[key] = 50
         # columnsWidth[column_name] = config["columnsWidth"][column_name]
 
-    return render_template("index.html", view_name=current_view_name, relations=view["relations"], views=found_views_and_data, columnsWidth=columnsWidth, search=search)
+    return render_template("index.html", view_name=current_view_name, relations=views[current_view_name]["relations"], views=found_views_and_data, columnsWidth=columnsWidth, search=search)
 
 
 @app.route('/save_data', methods=['POST'])
