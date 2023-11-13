@@ -129,7 +129,9 @@
                   </select>
                 </td>
                 {% else %}
-                <td contenteditable="true" data-field="{{ key }}">{{ value }}</td>
+                <td>
+                  <input name="{{ (row['ID'] ~ key) | string }}" value="{{ value }}"/></input>
+                </td>
                 {% endif %}
                 {% endif %}
                 {% endfor %}

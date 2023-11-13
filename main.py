@@ -8,21 +8,14 @@ app = Flask(__name__)
 with open("config.json") as f:
     config = json.load(f)
 
-conn_str = config["connection_string"]
-conn = pyodbc.connect(conn_str)
-c = conn.cursor()
-
 views = config["views"]
 
 relations = config["relations"]
 
 
 def load_data_from_db():
-    with open("config.json") as f:
-        config = json.load(f)
 
-    conn_str = config["connection_string"]
-    conn = pyodbc.connect(conn_str)
+    conn = pyodbc.connect(config["connection_string"])
     c = conn.cursor()
 
     for view_name, view in views.items():
@@ -68,42 +61,10 @@ def load_data_from_db():
     return views
 
 
-def save_data_to_db(view_name, data):
-    with open("config.json") as f:
-        config = json.load(f)
-
-    conn_str = config["connection_string"]
-    conn = pyodbc.connect(conn_str)
-    c = conn.cursor()
-
-    table_name = config["views"][view_name]["table"]
-    id_field = config["views"][view_name]["columns"]["ID"]
-
-    for row in data:
-        # Überprüfen, ob die Daten geändert wurden
-        if row.get("changed", False):
-            set_clause = ""
-            comma = " "
-            for key, value in row.items():
-                if key != "ID" and key != "changed":
-                    old_value = config["views"][view_name]["data"][row["ID"]-1][key]
-                    if old_value != value:
-                        set_clause += comma + \
-                            config["views"][view_name]["columns"][key] + \
-                            " = '" + str(value) + "'"
-                        comma = ", "
-
-            update_query = "update " + table_name + " set " + \
-                set_clause + " where " + id_field + " = " + str(row["ID"])
-            c.execute(update_query)
-
-    conn.commit()
-
-
 views_and_data = load_data_from_db()
 
 last_view_name = ""
-last_search_words = ""
+last_search = ""
 last_found_views_and_data = {}
 last_view = {}
 
@@ -133,31 +94,38 @@ def form():
     # views = load_data_from_db()
 
     global last_view_name
-    global last_search_words
+    global last_search
     global last_found_views_and_data
     global last_view
 
     current_view_name = request.form['view_name']
+    
 
     search = request.form['search']
     # Suchtext in Wörter aufteilen
     search_words = search.lower().split()
 
-    if search_words == last_search_words and current_view_name == last_view_name:
-        # wenn kein Suchwort definiert ist, dann neu einlesen
+    if search == last_search and current_view_name == last_view_name:
+        # wenn nur auf OK geklickt wurde
+        for row in last_view["data"]:
+            for key, value in row.items():
+                inputName = row["ID"] + key
+                newValue = request.form[inputName]
+                
+        # neu einlesen
         local_views_and_data = load_data_from_db()
     else:
         local_views_and_data = views_and_data
 
     found_in_current_view = True
 
-    if search_words == last_search_words:
+    if search == last_search:
         found_views_and_data = last_found_views_and_data
         view = last_view
 
     else:  # Suchen
 
-        last_search_words = search_words
+        last_search = search
 
         found_views_and_data = {}
         found_view_name = ""
@@ -230,33 +198,6 @@ def form():
         # columnsWidth[column_name] = config["columnsWidth"][column_name]
 
     return render_template("index.html", view_name=current_view_name, relations=view["relations"], views=found_views_and_data, columnsWidth=columnsWidth, search=search)
-
-
-@app.route('/save_data', methods=['POST'])
-def save_data():
-    if request.method == 'POST':
-        try:
-            view_name = request.json['view_name']
-            data = request.json['data']
-            old_data = views_and_data[view_name]["data"]
-
-            # Überprüfen, ob die Daten geändert wurden, und das Feld "changed" entsprechend markieren
-            for row in data:
-                if row != None and row.get("ID", None) != None:
-                    # row["changed"] = False
-                    for key, value in row.items():
-                        if key != "ID" and value != None and value != "":
-                            for row_old in old_data:
-                                if str(row_old["ID"]) == str(row["ID"]):
-                                    old_value = row_old[key]
-                                    if str(old_value) != str(value):
-                                        row["changed"] = True
-                                    break
-
-            save_data_to_db(view_name, data)
-            return jsonify({'success': True})
-        except Exception as e:
-            return jsonify({'success': False, 'error': str(e)})
 
 
 if __name__ == "__main__":
