@@ -85,53 +85,62 @@
   </head>
   <body>
     <form id="myForm" action="/form" method="post">
-      <label>Suche:</label>
-      <input name="search" value="{{ search }}" >
-      <input type="submit" value="OK">
-      <label>Ansicht:</label>
-      <select name="view_name" onchange="submitForm()">
-        {% for key, value in views.items() %}
-        <option value="{{ key }}" {% if view_name == key %} selected {% endif %}>{{ key }}</option>
-        {% endfor %}
-      </select>
+      <table>
+        <tr>
+          <td>
+            <table>
+              <tr>
+                <td><label>Suche:</label></td>
+                <td><input name="search" value="{{ search }}"></td>
+                <td><input type="submit" value="OK"></td>
+                <td><label>Ansicht:</label></td>
+                <td><select name="view_name" onchange="submitForm()">
+                  {% for key, value in views.items() %}
+                  <option value="{{ key }}" {% if view_name == key %} selected {% endif %}>{{ key }}</option>
+                  {% endfor %}
+                </select></td>
+              </tr>
+            </table>
+        </td> 
+        </tr>
+        {% if view_name %}
+        <tr><td>
+          <table name="data_table">
+            <thead>
+              <tr>
+                {% for column in views[view_name]["data_found"][0] %}
+                <th>{{ column }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in views[view_name]["data_found"][:100] %}
+              <tr data-id="{{ row['ID'] }}" {% if row.get('changed') %}class="changed"{% endif %}>
+                {% for key, value in row.items() %}
+                {% if key == "ID" %}
+                <td>{{ value }}</td>
+                {% else %}
+                {% if relations[key] %}
+                <td>
+                  <select class="form-control">
+                    {% for rel_row in relations[key] %}
+                    <option value="{{ rel_row['ID'] }}" {% if value == rel_row['ID'] %}selected{% endif %}>{{ rel_row['Name'] }}</option>
+                    {% endfor %}
+                  </select>
+                </td>
+                {% else %}
+                <td contenteditable="true" data-field="{{ key }}">{{ value }}</td>
+                {% endif %}
+                {% endif %}
+                {% endfor %}
+              </tr>
+              {% endfor %}      
+            </tbody>
+          </table>
+        </td></tr>
+        {% endif %}
+      </table>
     </form>
-    {% if view_name %}
-    <table>
-      <thead>
-        <tr>
-          {% for column in views[view_name]["data_found"][0] %}
-          <th>{{ column }}</th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in views[view_name]["data_found"][:100] %}
-        <tr>
-          {% for key, value in row.items() %}
-          {% if key == "ID" %}
-          <td width="10">{{ value }}</td>
-          {% else %}
-          {% if relations[key] %}
-          <td width="120">
-            <select value="{{ value }}">
-              {% for rel_row in relations[key] %}
-              <option value="{{ rel_row['ID'] }}" {% if rel_row['ID'] == value %} selected {% endif %}>{{ rel_row['Name'] }}</option>
-              {% endfor %}
-            </select>
-          </td>
-          {% else %}
-          <td 
-            {% if key == "Datum" or key == "Kuerzel" or key == "Auftrag" or key == "DauerStd" %} width="70" {% endif %}>
-            <input type="text" value="{{ value }}" />
-          </td>
-          {% endif %}
-          {% endif %}
-          {% endfor %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% endif %}
 
     <script>
       function submitForm() {
