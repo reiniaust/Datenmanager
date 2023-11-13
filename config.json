@@ -1,39 +1,77 @@
 {
-    "connection_string": "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=C:\\Users\\reinh\\OneDrive\\Documents\\Analyse.accdb;",
+    "connection_string": "DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=R:\\sd\\mdb\\kontroll\\koantool.mdb;",
     "views": {
-        "Mitglieder": {
-            "table": "Mitglieder",
+        "Auftragsarten": {
+            "table": "[I-AuftragsArt]",
             "columns": {
-                "ID": "Mitgliedsnummer",
-                "Name": "Nachname & ', ' & Vorname",
-                "Geburtsdatum": "Geburtsdatum",
-                "Strasse": "Strasse"
+                "ID": "AuftrArt",
+                "Name": "Text"
             }
         },
-        "Kontakte": {
-            "table": "Kontakte",
+        "Taetigkeiten": {
+            "table": "[I-Taetigkeit]",
             "columns": {
-                "ID": "ID",
-                "Name": "NACHNAME & ', ' & VORNAME",
-                "Nachname": "NACHNAME",
-                "Vorname": "VORNAME",
-                "Mitglied": "Mitgliedsnummer"
+                "ID": "TaetID",
+                "Name": "Taetigkeit"
             }
         },
-        "Spenden": {
-            "table": "Spenden",
+        "Produkte": {
+            "table": "Produkte",
             "columns": {
-                "ID": "ID",
-                "Spender": "Spender",
-                "Betrag": "Betrag",
-                "Datum": "Tag"
+                "ID": "ProduktID",
+                "Name": "Produkt"
+            }
+        },
+        "Kunden": {
+            "table": "Debitor",
+            "columns": {
+                "ID": "KundenNr",
+                "Name": "Namekurz",
+                "Name1": "Name1",
+                "Bemerkung": "Bemerkung",
+                "Netzwerk": "Hardware"
+            }
+        },
+        "Auftraege": {
+            "table": "Auftrag",
+            "columns": {
+                "ID": "HotlineNr",
+                "Produkt": "ProduktNr",
+                "Auftragsart": "Auftragsart",
+                "Kunde": "ProjektNr",
+                "Titel": "Titel"
+            }
+        },
+        "Kontrolling": {
+            "table": "qMitarbeiterKtlAb2018",
+            "columns": {
+                "ID": "SatzId",
+                "Datum": "Datum",
+                "Kuerzel": "Kuerzel",
+                "Aktion": "AktNummer",
+                "Kunde": "PojektNr",
+                "DauerStd": "DauerStd",
+                "Auftrag": "Auftrag",
+                "Inhalt": "Text"
             }
         }
     },
     "relations": {
-        "Spenden": {
-            "Spender": "Kontakte",
-            "Mitglied": "Mitglieder"
+        "Kontrolling": {
+            "Kunde": "Kunden",
+            "Aktion": "Taetigkeiten"
+        },
+        "Auftraege": {
+            "Kunde": "Kunden",
+            "Auftragsart": "Auftragsarten",
+            "Produkt": "Produkte"
+        },
+        
+        "Wissen": {
+            "Oberpunkt": "Wissen"
         }
+    },
+    "columnsWidth": {
+        "Inhalt": "50"
     }
 }
