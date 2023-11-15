@@ -122,7 +122,7 @@
                 {% else %}
                 {% if relations[key] %}
                 <td>
-                  <select class="form-control">
+                  <select name="{{ (row['ID'] ~ key) | string }}" class="form-control">
                     {% for rel_row in relations[key] %}
                     <option value="{{ rel_row['ID'] }}" {% if value == rel_row['ID'] %}selected{% endif %}>{{ rel_row['Name'] }}</option>
                     {% endfor %}
@@ -130,7 +130,7 @@
                 </td>
                 {% else %}
                 <td>
-                  <input name="{{ (row['ID'] ~ key) | string }}" value="{{ value }}"/></input>
+                  <input type="text" name="{{ (row['ID'] ~ key) | string }}" value="{{ value }}"/></input>
                 </td>
                 {% endif %}
                 {% endif %}

@@ -60,20 +60,20 @@ def load_data_from_db():
 
     return views
 
-
-views_and_data = load_data_from_db()
+all_views_and_data = load_data_from_db()
+found_views_and_data = all_views_and_data
 
 last_view_name = ""
 last_search = ""
-last_found_views_and_data = {}
-last_view = {}
 
 
 @app.route("/start")
 def index():
     # views = load_data_from_db()
+    global last_view_name
+    global last_found_views_and_data
 
-    for view_name, view in views_and_data.items():
+    for view_name, view in all_views_and_data.items():
 
         # Es wird nur die erste View verwendet (also break der Schleife nach dem render_template)
 
@@ -83,55 +83,59 @@ def index():
 
         view["data_found"] = view["data"]
 
-        global last_view_name
         last_view_name = view_name
+        last_found_views_and_data = all_views_and_data
 
-        return render_template("index.html", view_name=view_name, relations=view["relations"], views=views_and_data, columnsWidth=columnsWidth)
+        return render_template("index.html", view_name=view_name, relations=view["relations"], views=all_views_and_data, columnsWidth=columnsWidth)
 
 
 @app.route('/form', methods=['POST'])
 def form():
     # views = load_data_from_db()
 
+    global all_views_and_data
     global last_view_name
     global last_search
-    global last_found_views_and_data
-    global last_view
+    global found_views_and_data
 
-    current_view_name = request.form['view_name']
-    
-
-    search = request.form['search']
+    try:
+        current_view_name = request.form['view_name']
+    except:
+        current_view_name = None
+        
+    search_text = request.form['search']
     # Suchtext in Wörter aufteilen
-    search_words = search.lower().split()
+    search_words = search_text.lower().split()
 
-    if search == last_search and current_view_name == last_view_name:
-        # wenn nur auf OK geklickt wurde
-        for row in last_view["data"]:
+    # wenn nur auf OK geklickt wurde
+    if search_text == last_search and current_view_name == last_view_name:
+        
+        # Fals Daten geändert wurden, dann speichern
+        for row in views[current_view_name]["data"]:
             for key, value in row.items():
-                inputName = row["ID"] + key
-                newValue = request.form[inputName]
+                if key != "ID":
+                    inputName = str(row["ID"]) + key
+                    try:
+                        newValue = request.form[inputName]
+                    except:
+                        newValue = value
+                    if str(newValue) != 'None' and str(newValue) != str(value):
+                        print(newValue)
                 
         # neu einlesen
-        local_views_and_data = load_data_from_db()
-    else:
-        local_views_and_data = views_and_data
+        all_views_and_data = load_data_from_db()
 
     found_in_current_view = True
 
-    if search == last_search:
-        found_views_and_data = last_found_views_and_data
-        view = last_view
+    if search_text != last_search:  # Suchen
 
-    else:  # Suchen
-
-        last_search = search
+        last_search = search_text
 
         found_views_and_data = {}
         found_view_name = ""
         found_key = ""
         all_search_words = search_words
-        for view_name, view in local_views_and_data.items():
+        for view_name, view in all_views_and_data.items():
             found_in_view = False
             view["data_found"] = []
 
@@ -156,7 +160,7 @@ def form():
                         try:
                             # Suche in Beziehung
                             foreign_view = relations[view_name][key]
-                            foreign_data = local_views_and_data[foreign_view]["data"]
+                            foreign_data = all_views_and_data[foreign_view]["data"]
                             for d in foreign_data:
                                 if d["ID"] == value:
                                     search_in += " " + str(d["Name"])
@@ -179,25 +183,24 @@ def form():
                 found_views_and_data[view_name] = view
                 if view_name == current_view_name:
                     found_in_current_view = True
-
-    if len(found_views_and_data) == 0:
-        found_views_and_data = local_views_and_data
-    else:
-        if found_in_current_view == False:
-            for view_name, view in found_views_and_data.items():
-                current_view_name = view_name
-                break
-
-        last_view_name = current_view_name
-    last_found_views_and_data = found_views_and_data
-    last_view = views[current_view_name]
-
+        
+        if len(found_views_and_data) == 0:
+            found_views_and_data = all_views_and_data
+        else:
+            if found_in_current_view == False:
+                for view_name, view in found_views_and_data.items():
+                    current_view_name = view_name
+                    break
+        
     columnsWidth = {}
     for key, value in views[current_view_name]["columns"].items():
         columnsWidth[key] = 50
         # columnsWidth[column_name] = config["columnsWidth"][column_name]
+        
+    last_view_name = current_view_name
+            
 
-    return render_template("index.html", view_name=current_view_name, relations=views[current_view_name]["relations"], views=found_views_and_data, columnsWidth=columnsWidth, search=search)
+    return render_template("index.html", view_name=current_view_name, relations=views[current_view_name]["relations"], views=found_views_and_data, columnsWidth=columnsWidth, search=search_text)
 
 
 if __name__ == "__main__":
